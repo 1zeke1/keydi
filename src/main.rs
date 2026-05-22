@@ -6,7 +6,7 @@ compile_error!("KeyDi is Windows-only.");
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
-use eframe::egui::{self, Color32, FontId, RichText, Vec2};
+use eframe::egui::{self, Color32, FontId, RichText, Vec2, ViewportCommand};
 
 use windows::Win32::Foundation::{HINSTANCE, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
@@ -78,6 +78,10 @@ impl eframe::App for KeyDiApp {
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Redraw only on user interaction, not continuously at 60 FPS.
+        // This is the main RAM/CPU fix — egui idles at ~0% CPU when inactive.
+        ctx.request_repaint_after(std::time::Duration::from_millis(500));
+
         self.keyboard_disabled = BLOCKING.load(Ordering::Relaxed);
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -155,6 +159,8 @@ fn main() -> eframe::Result<()> {
             .with_min_inner_size([300.0, 160.0])
             .with_max_inner_size([300.0, 160.0])
             .with_resizable(false),
+        // Disable vsync — reduces GPU/driver overhead at idle
+        vsync: false,
         ..Default::default()
     };
 
