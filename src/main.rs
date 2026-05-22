@@ -6,7 +6,7 @@ compile_error!("KeyDi is Windows-only.");
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
-use eframe::egui::{self, Color32, FontId, RichText, Vec2, ViewportCommand};
+use eframe::egui::{self, Color32, FontId, RichText, Vec2};
 
 use windows::Win32::Foundation::{HINSTANCE, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
@@ -135,13 +135,13 @@ impl eframe::App for KeyDiApp {
 
                 if self.keyboard_disabled {
                     ui.label(
-                        RichText::new("● Keyboard disabled")
+                        RichText::new("Keyboard disabled")
                             .font(FontId::proportional(14.0))
                             .color(Color32::from_rgb(230, 60, 60)),
                     );
                 } else {
                     ui.label(
-                        RichText::new("● Keyboard active")
+                        RichText::new("Keyboard active")
                             .font(FontId::proportional(14.0))
                             .color(Color32::from_rgb(50, 200, 100)),
                     );
@@ -152,14 +152,23 @@ impl eframe::App for KeyDiApp {
 }
 
 fn main() -> eframe::Result<()> {
+    let icon = include_bytes!("../keydi.ico");
+    let image = image::load_from_memory(icon).unwrap().to_rgba8();
+    let (w, h) = image.dimensions();
+    let icon_data = egui::IconData {
+        rgba: image.into_raw(),
+        width: w,
+        height: h,
+    };
+
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("KeyDi")
+            .with_icon(icon_data)
             .with_inner_size([300.0, 160.0])
             .with_min_inner_size([300.0, 160.0])
             .with_max_inner_size([300.0, 160.0])
             .with_resizable(false),
-        // Disable vsync — reduces GPU/driver overhead at idle
         vsync: false,
         ..Default::default()
     };
